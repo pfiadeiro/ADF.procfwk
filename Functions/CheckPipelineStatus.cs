@@ -8,7 +8,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Microsoft.Azure.Management.DataFactory;
-using Microsoft.Azure.Management.DataFactory.Models;
+using adf = Microsoft.Azure.Management.DataFactory.Models;
+using Microsoft.Azure.Management.Synapse;
+using syn = Microsoft.Azure.Management.Synapse.Models;
 using Newtonsoft.Json.Linq;
 using ADFprocfwk.Helpers;
 
@@ -35,7 +37,8 @@ namespace ADFprocfwk
             string authenticationKey = data?.authenticationKey;
             string subscriptionId = data?.subscriptionId;
             string resourceGroup = data?.resourceGroup;
-            string factoryName = data?.factoryName;
+            string orchestratorName = data?.orchestratorName;
+            string orchestratorType = data?.orchestratorType;
             string pipelineName = data?.pipelineName;
             string runId = data?.runId;
 
@@ -46,7 +49,8 @@ namespace ADFprocfwk
                 authenticationKey == null ||
                 subscriptionId == null ||
                 resourceGroup == null ||
-                factoryName == null ||
+                orchestratorName == null ||
+                orchestratorType == null ||
                 pipelineName == null ||
                 runId == null
                 )
@@ -60,35 +64,76 @@ namespace ADFprocfwk
             //Create a data factory management client
             log.LogInformation("Creating ADF connectivity client.");
             
-            using (var client = DataFactoryClient.CreateDataFactoryClient(tenantId, applicationId, authenticationKey, subscriptionId))
+            if (orchestratorType.ToUpper() == "ADF")
             {
-                //Get pipeline status with provided run id
-                PipelineRun pipelineRun;
-                pipelineRun = client.PipelineRuns.Get(resourceGroup, factoryName, runId);
-                log.LogInformation("Checking ADF pipeline status.");
-
-                //Create simple status for Data Factory Until comparison checks
-                string simpleStatus;
-
-                if (pipelineRun.Status == "InProgress")
+                using (var client = DataFactoryClient.CreateDataFactoryClient(tenantId, applicationId, authenticationKey, subscriptionId))
                 {
-                    simpleStatus = "Running";
-                }
-                else
-                {
-                    simpleStatus = "Done";
-                }
+                    //Get pipeline status with provided run id
+                    adf.PipelineRun pipelineRun;
+                    pipelineRun = client.PipelineRuns.Get(resourceGroup, orchestratorName, runId);
+                    log.LogInformation("Checking ADF pipeline status.");
 
-                log.LogInformation("ADF pipeline status: " + pipelineRun.Status);
+                    //Create simple status for Data Factory Until comparison checks
+                    string simpleStatus;
 
-                //Final return detail
-                outputString = "{ \"PipelineName\": \"" + pipelineName +
-                                        "\", \"RunId\": \"" + pipelineRun.RunId +
-                                        "\", \"SimpleStatus\": \"" + simpleStatus +
-                                        "\", \"Status\": \"" + pipelineRun.Status +
-                                        "\" }";
+                    if (pipelineRun.Status == "InProgress")
+                    {
+                        simpleStatus = "Running";
+                    }
+                    else
+                    {
+                        simpleStatus = "Done";
+                    }
+
+                    log.LogInformation("ADF pipeline status: " + pipelineRun.Status);
+
+                    //Final return detail
+                    outputString = "{ \"PipelineName\": \"" + pipelineName +
+                                            "\", \"RunId\": \"" + pipelineRun.RunId +
+                                            "\", \"SimpleStatus\": \"" + simpleStatus +
+                                            "\", \"Status\": \"" + pipelineRun.Status +
+                                            "\" }";
+                }
             }
+            else if (orchestratorType.ToUpper() == "SYN")
+            {
+                using (var client = SynapseClient.CreateSynapseClient(tenantId, applicationId, authenticationKey, subscriptionId))
+                {
+                    //Get pipeline status with provided run id
+                    
+                    /*
+                    syn.Executors pipelineRun;
+                    pipelineRun = client.PipelineRuns.Get(resourceGroup, orchestratorName, runId);
+                    log.LogInformation("Checking ADF pipeline status.");
 
+                    //Create simple status for Data Factory Until comparison checks
+                    string simpleStatus;
+
+                    if (pipelineRun.Status == "InProgress")
+                    {
+                        simpleStatus = "Running";
+                    }
+                    else
+                    {
+                        simpleStatus = "Done";
+                    }
+
+                    log.LogInformation("ADF pipeline status: " + pipelineRun.Status);
+
+                    //Final return detail
+                    outputString = "{ \"PipelineName\": \"" + pipelineName +
+                                            "\", \"RunId\": \"" + pipelineRun.RunId +
+                                            "\", \"SimpleStatus\": \"" + simpleStatus +
+                                            "\", \"Status\": \"" + pipelineRun.Status +
+                                            "\" }";
+                    */
+                }
+            }
+            else
+            {
+                log.LogInformation("Invalid orchestrator type.");
+                return new BadRequestObjectResult("Invalid orchestrator type provided. Expected ADF or SYN.");
+            }
             #endregion
 
             JObject outputJson = JObject.Parse(outputString);
