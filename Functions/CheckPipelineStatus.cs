@@ -100,10 +100,15 @@ namespace ADFprocfwk
                 using (var client = SynapseClient.CreateSynapseClient(tenantId, applicationId, authenticationKey, subscriptionId))
                 {
                     //Get pipeline status with provided run id
-                    
+
                     /*
-                    syn.Executors pipelineRun;
+                    syn.Workspace pipelineRun; //wrong
+                    //client.
                     pipelineRun = client.PipelineRuns.Get(resourceGroup, orchestratorName, runId);
+                    */
+                    adf.PipelineRun pipelineRun;
+                    pipelineRun = client.PipelineRuns.Get(resourceGroup, orchestratorName, runId);
+
                     log.LogInformation("Checking ADF pipeline status.");
 
                     //Create simple status for Data Factory Until comparison checks
@@ -126,7 +131,7 @@ namespace ADFprocfwk
                                             "\", \"SimpleStatus\": \"" + simpleStatus +
                                             "\", \"Status\": \"" + pipelineRun.Status +
                                             "\" }";
-                    */
+                    
                 }
             }
             else
