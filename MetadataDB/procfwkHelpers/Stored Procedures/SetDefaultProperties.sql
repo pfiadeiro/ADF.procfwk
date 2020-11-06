@@ -53,5 +53,20 @@ BEGIN
 	EXEC [procfwkHelpers].[AddProperty]
 		@PropertyName = N'ExecutionPrecursorProc',
 		@PropertyValue = N'[dbo].[ExampleCustomExecutionPrecursor]',
-		@Description = N'This procedure will be called first in the parent pipeline and can be used to perform/update any required custom behaviour in the framework execution. For example, enable/disable Worker pipelines given a certain run time/day. Invalid proc name values will be ignored.'
+		@Description = N'This procedure will be called first in the parent pipeline and can be used to perform/update any required custom behaviour in the framework execution. For example, enable/disable Worker pipelines given a certain run time/day. Invalid proc name values will be ignored.';
+
+	EXEC [procfwkHelpers].[AddProperty]
+		@PropertyName = N'AllowedMonthsValues',
+		@PropertyValue = N'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec,*',
+		@Description = N'Allowed values to be populated in column [ScheduleMonthOfYear] in table [procfwk].[Pipelines]. Any values outside of these will cause an integrity check error.';
+
+	EXEC [procfwkHelpers].[AddProperty]
+		@PropertyName = N'AllowedWeekdaysValues',
+		@PropertyValue = N'Mon,Tue,Wed,Thu,Fri,Sat,Sun,*',
+		@Description = N'Allowed values to be populated in column [ScheduleDayOfWeek] in table [procfwk].[Pipelines]. Any values outside of these will cause an integrity check error.';
+
+	EXEC [procfwkHelpers].[AddProperty]
+		@PropertyName = N'AllowedDaysValues',
+		@PropertyValue = N'1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,*',
+		@Description = N'Allowed values to be populated in column [ScheduleDayOfMonth] in table [procfwk].[Pipelines]. Any values outside of these will cause an integrity check error.';
 END;

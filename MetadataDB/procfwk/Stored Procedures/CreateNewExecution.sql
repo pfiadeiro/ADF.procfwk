@@ -37,6 +37,9 @@ BEGIN
 	WHERE
 		p.[Enabled] = 1
 		AND s.[Enabled] = 1
+		AND (charindex(left(datename(month,getdate()),3),p.[ScheduleMonthOfYear]) > 0 OR p.[ScheduleMonthOfYear] = '*')
+		AND (charindex(left(datename(weekday,getdate()),3),p.[ScheduleDayOfWeek]) > 0 OR p.[ScheduleDayOfWeek] = '*')
+		AND (charindex(',' + datename(day,getdate()) + ',' , ',' + p.[ScheduleDayOfMonth] + ',') > 0 OR p.[ScheduleDayOfMonth] = '*')
 
 	ALTER INDEX [IDX_GetPipelinesInStage] ON [procfwk].[CurrentExecution]
 	REBUILD;

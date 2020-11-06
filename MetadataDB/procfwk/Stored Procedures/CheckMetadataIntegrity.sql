@@ -25,6 +25,9 @@ BEGIN
 	Check 16 - When using DependencyChain failure handling, are there any dependants in the same execution stage of the predecessor?
 	Check 17 - Does the SPNHandlingMethod property have a valid value?
 	Check 18 - Does the Service Principal table contain both types of SPN handling for a single credential?
+	Check 19 - Are the months entered in the schedule valid?
+	Check 20 - Are the days of the week entered in the schedule valid?
+	Check 21 - Are the days of the month entered in the schedule valid?
 	---------------------------------------------------------------------------------------------------------------------------------
 	Check A: - Are there any Running pipelines that need to be cleaned up?
 	*/
@@ -349,6 +352,70 @@ BEGIN
 				( 
 				18,
 				'The table [dbo].[ServicePrincipals] can only have one method of SPN details sorted per credential ID.'
+				)	
+		END;
+
+	--Check 19:
+	IF EXISTS
+		(
+		SELECT
+			DISTINCT value
+		FROM
+			[procfwk].[Pipelines]
+		CROSS APPLY
+			STRING_SPLIT([ScheduleMonthOfYear],',')
+		WHERE
+			CHARINDEX(value, (SELECT [procfwk].[GetPropertyValueInternal]('AllowedMonthsValues'))) = 0
+		)
+		BEGIN
+			INSERT INTO @MetadataIntegrityIssues
+			VALUES
+				( 
+				18,
+				'The table [procfwk].[Pipelines] contains values in the column [ScheduleMonthOfYear] that are invalid.'
+				)	
+		END;
+
+	--Check 20:
+	IF EXISTS
+		(
+		SELECT
+			DISTINCT value
+		FROM
+			[procfwk].[Pipelines]
+		CROSS APPLY
+			STRING_SPLIT([ScheduleDayOfWeek],',')
+		WHERE
+			CHARINDEX(value, (SELECT [procfwk].[GetPropertyValueInternal]('AllowedWeekdaysValues'))) = 0
+		)
+		BEGIN
+			INSERT INTO @MetadataIntegrityIssues
+			VALUES
+				( 
+				18,
+				'The table [procfwk].[Pipelines] contains values in the column [ScheduleDayOfWeek] that are invalid.'
+				)	
+		END;
+
+
+	--Check 21:
+	IF EXISTS
+		(
+		SELECT
+			DISTINCT value
+		FROM
+			[procfwk].[Pipelines]
+		CROSS APPLY
+			STRING_SPLIT([ScheduleDayOfMonth],',')
+		WHERE
+			CHARINDEX(',' + value + ',' , ',' + (SELECT [procfwk].[GetPropertyValueInternal]('AllowedDaysValues')) + ',') = 0
+		)
+		BEGIN
+			INSERT INTO @MetadataIntegrityIssues
+			VALUES
+				( 
+				18,
+				'The table [procfwk].[Pipelines] contains values in the column [ScheduleDayOfMonth] that are invalid.'
 				)	
 		END;
 
